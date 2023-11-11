@@ -14,12 +14,20 @@ wsRouter.all("/rtsp", async (ctx, next) => {
     return;
   }
   let rtsp_url = ctx.query["rtsp_url"];
-  console.log("rtsp: ", rtsp_url);
+  console.log("open rtsp: ", rtsp_url);
 
   try {
     let video = getvideo(ctx, rtsp_url);
     ctx.websocket.on("connection", (socket, request) => {
       onSocketConnect(socket, request, video);
+    });
+
+    ctx.websocket.on("close", (code, reason) => {
+      video.close();
+      if (code == "1001") {
+        return "";
+      }
+      console.log("websocket on close", code, reason);
     });
 
     video.on("camdata", (data) => {
@@ -33,9 +41,8 @@ wsRouter.all("/rtsp", async (ctx, next) => {
 
 function getvideo(ctx, rstp_url) {
   if (!ctx.app.videos) ctx.app.videos = {};
-  if (rstp_url in ctx.app.videos) return ctx.app.videos[rstp_url];
+  if (rstp_url in ctx.app.videos && ctx.app.videos[rstp_url].closed == false) return ctx.app.videos[rstp_url]
 
-  console.log("create video");
   let video = createVideoStream(rstp_url);
   ctx.app.videos[rstp_url] = video;
 

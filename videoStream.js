@@ -7,6 +7,7 @@ function Mpeg1Muxer(options) {
   this.url = options.url;
   this.ffmpegOptions = options.ffmpegOptions;
   this.exitCode = undefined;
+  this.closed = false;
   this.additionalFlags = [];
   if (this.ffmpegOptions) {
     for (let key in this.ffmpegOptions) {
@@ -48,6 +49,7 @@ function Mpeg1Muxer(options) {
   });
 
   this.close = () => {
+    this.closed = true;
     this.stream.kill("SIGINT");
   };
   return this;
